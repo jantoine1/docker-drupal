@@ -2,6 +2,9 @@ FROM php:5.6-apache
 
 # Enable the Cache Expiration, URL Rewriting and SSL Apache modules.
 RUN a2enmod expires rewrite ssl
+RUN apt-get update && apt-get install -y ssl-cert \
+  && a2enmod expires rewrite ssl \
+  && a2ensite default-ssl
 
 # Configure and install PHP extensions.
 RUN apt-get update && apt-get install -y libjpeg-dev \
@@ -43,6 +46,8 @@ RUN apt-get update && apt-get install -y ssmtp \
 
 # Copy scripts.
 COPY entrypoint.sh /
+
+EXPOSE 443
 
 ENTRYPOINT ["/entrypoint.sh"]
 
