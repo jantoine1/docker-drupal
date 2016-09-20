@@ -3,9 +3,11 @@
 * Apache 2.4
 * PHP 5.6
 * PHP Extensions:
+  * exif
   * gd
   * mbstring
   * mysqli
+  * opcache
   * pdo
   * pdo_mysql
   * zip

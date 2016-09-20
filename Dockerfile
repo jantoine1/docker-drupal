@@ -1,4 +1,4 @@
-FROM php:5.6-apache
+FROM php:apache
 
 # Enable the Cache Expiration, URL Rewriting and SSL Apache modules.
 RUN a2enmod expires rewrite ssl
@@ -12,9 +12,11 @@ RUN apt-get update && apt-get install -y libjpeg-dev \
   libpq-dev \
   zlib1g-dev \
   && docker-php-ext-configure gd --with-png-dir=/usr --with-jpeg-dir=/usr \
-  && docker-php-ext-install gd \
+  && docker-php-ext-install exif \
+  gd \
   mbstring \
   mysqli \
+  opcache \
   pdo \
   pdo_mysql \
   zip
@@ -41,8 +43,15 @@ RUN apt-get update && apt-get install -y mysql-client \
 # be overridden. Also inform PHP where the sendmail program can be found.
 RUN apt-get update && apt-get install -y ssmtp \
   mailutils \
-  && echo "FromLineOverride=YES" >> /etc/ssmtp/ssmtp.conf \
+  && echo "FromLineOverride = YES" >> /etc/ssmtp/ssmtp.conf \
   && echo "sendmail_path = \"/usr/sbin/sendmail -t -i\"" >> /usr/local/etc/php/php.ini
+
+# Set the sites timezone.
+RUN echo "date.timezone = 'America/Los_Angeles'" >> /usr/local/etc/php/php.ini
+
+# Allow large file uploads.
+RUN echo "upload_max_filesize = 1G" >> /usr/local/etc/php/php.ini \
+  && echo "post_max_size = 1G" >> /usr/local/etc/php/php.ini
 
 # Copy scripts.
 COPY entrypoint.sh /
