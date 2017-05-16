@@ -44,12 +44,6 @@ This second example bind mounts the parent directory of a Drupal installation on
 
 If a Drupal installation is not bind mounted to the container leaving the /var/www/html directory empty, the "Composer template for Drupal projects" (https://github.com/drupal-composer/drupal-project) will be installed to the /var/www directory and and symlink will be created from the 'web' directory to the 'html' directory.
 
-Having the Drupal files on the host and bind mounted into the container can cause file ownership issues between the host and the container. To resolve this, a user is created in the container that is identical to the user on the host. To create the user, a user name and id must be passed in. The example below passes in the user name 'user' and the user id '1000'.
-
-```
--e USER="user" -e UID="1000"
-```
-
 Drupal can be configured to use various database backends, so a database backend is not included and must be linked in. The example below links the 'database_container' into our Drupal container and makes it accessible via the hostname 'db'.
 
 ```
@@ -65,7 +59,7 @@ sSMTP is used as the system's MTA (Mail Transfer Agent) which forwards messages 
 The basic pattern for starting a jantoine/drupal instance is:
 
 ```
-$ docker run --name drupal_container -P -v /path/to/drupal:/var/www/html -e USER="user" -e UID="1000" --link database_container:db --link mailhub_container:mail -d jantoine/drupal
+$ docker run --name drupal_container -P -v /path/to/drupal:/var/www/html --link database_container:db --link mailhub_container:mail -d jantoine/drupal
 ```
 
 To easily access the container via a desired hostname, create an [`nginx-proxy`](https://hub.docker.com/r/jwilder/nginx-proxy/) container and pass the hostname to the Drupal container.
