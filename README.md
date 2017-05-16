@@ -42,7 +42,7 @@ This second example bind mounts the parent directory of a Drupal installation on
 -v /path/to/drupal/parent:/var/www
 ```
 
-If a Drupal installation is not bind mounted to the container leaving the /var/www/html directory empty, the "Composer template for Drupal projects" (https://github.com/drupal-composer/drupal-project) will be installed to the /var/www directory and and symlink will be created from the 'web' directory to the 'html' directory.
+If a Drupal installation is not bind mounted to the container leaving the /var/www/html directory empty, the "Composer template for Drupal projects" (https://github.com/drupal-composer/drupal-project) will be built to the /var/www directory and a symlink will be created from the 'web' directory to the 'html' directory.
 
 Drupal can be configured to use various database backends, so a database backend is not included and must be linked in. The example below links the 'database_container' into our Drupal container and makes it accessible via the hostname 'db'.
 
