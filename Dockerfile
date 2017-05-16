@@ -44,11 +44,6 @@ RUN apt-get update && apt-get install -y ssmtp \
   && echo "FromLineOverride=YES" >> /etc/ssmtp/ssmtp.conf \
   && echo "sendmail_path = \"/usr/sbin/sendmail -t -i\"" >> /usr/local/etc/php/php.ini
 
-# Copy scripts.
-COPY entrypoint.sh /
-
 EXPOSE 443
-
-ENTRYPOINT ["/entrypoint.sh"]
 
 CMD ["apache2-foreground"]
