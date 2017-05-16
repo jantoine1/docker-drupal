@@ -54,9 +54,6 @@ RUN apt-get update && apt-get install -y ssmtp \
 # Initialize Apache HTTP Server.
 RUN service apache2 restart
 
-# Copy scripts.
-COPY entrypoint.sh /
-
 # Copy custom configuration files.
 COPY conf/apache2/sites-available/default /etc/apache2/sites-available/
 COPY conf/apache2/sites-available/default-ssl /etc/apache2/sites-available/
@@ -65,7 +62,5 @@ COPY conf/php5/apache2/php.ini /etc/php5/apache2/
 WORKDIR /var/www/html
 
 EXPOSE 80 443
-
-ENTRYPOINT ["/entrypoint.sh"]
 
 CMD ["/usr/sbin/apache2ctl", "-D", "FOREGROUND"]

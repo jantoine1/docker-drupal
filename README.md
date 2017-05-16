@@ -30,14 +30,6 @@ The example below bind mounts the Drupal root from the host (/path/to/drupal) to
 -v /path/to/drupal:/var/www/html
 ```
 
-Having the Drupal files on the host and bind mounted into the container can cause file ownership issues between the host and the container. To resolve this, a user is created in the container that is identical to the user on the host. To create the user a user name and id must be passed in.
-
-The example below passes in the user name 'user' and the user id '1000'.
-
-```
--e USER="user" -e UID="1000"
-```
-
 Drupal can be configured to use various database backends, so a database backend is not included and must be linked in.
 
 The example below links the 'database_container' into our Drupal container and makes it accessible via the hostname 'db'.
@@ -57,7 +49,7 @@ The example below links the 'mailhub_container' into our Druapl container and ma
 The basic pattern for starting a jantoine/drupal instance is:
 
 ```
-$ docker run --name cjc_d7.curves.com_dev_www -P -v /path/to/drupal:/var/www/html -e USER="user" -e UID="1000" --link database_container:db --link mailhub_container:mail -d jantoine/drupal
+$ docker run --name cjc_d7.curves.com_dev_www -P -v /path/to/drupal:/var/www/html --link database_container:db --link mailhub_container:mail -d jantoine/drupal
 ```
 
 To easily access the container via a desired hostname, create an [`nginx-proxy`](https://hub.docker.com/r/jwilder/nginx-proxy/) container and pass the hostname to the Drupal container.
