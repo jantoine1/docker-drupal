@@ -1,30 +1,49 @@
-FROM php:apache
+FROM php:7.2-apache
 
 # Enable the Cache Expiration, URL Rewriting and SSL Apache modules.
-RUN apt update \
-  && apt install -y \
+RUN set -ex; \
+  \
+  apt-get update; \
+  apt-get install -y --no-install-recommends \
     ssl-cert \
-  && a2enmod \
-    expires \
-    rewrite \
-    ssl \
-  && a2ensite \
-    default-ssl
+  ; \
+  \
+  if command -v a2enmod; then \
+    a2enmod \
+      expires \
+      rewrite \
+      ssl \
+    ; \
+  fi; \
+  \
+  if command -v a2ensite; then \
+    a2ensite \
+      default-ssl \
+    ; \
+  fi; \
+  rm -rf /var/lib/apt/lists/*
 
 # Install and configure PHP dependencies and extensions.
-RUN apt update \
-  && apt install -y \
+RUN set -ex; \
+  # Save apt-mark's 'manual' list for purging build dependencies.
+  savedAptMark="$(apt-mark showmanual)"; \
+  \
+  # Install build dependencies.
+  apt-get update; \
+  apt-get install -y --no-install-recommends \
     libjpeg-dev \
-    libpng12-dev \
+    libpng-dev \
     libpq-dev \
     zlib1g-dev \
+  ; \
   # Extract the PHP source and configure extensions.
-  && docker-php-ext-configure \
-    gd --with-png-dir=/usr --with-jpeg-dir=/usr \
+  docker-php-ext-configure gd --with-png-dir=/usr --with-jpeg-dir=/usr; \
   # Include the PECL Upload Progress PHP extension source.
-  && mkdir /usr/src/php/ext/uploadprogress \
-  && curl -fSL https://github.com/php/pecl-php-uploadprogress/archive/master.tar.gz | tar xvz -C /usr/src/php/ext/uploadprogress --strip 1 \
-  && docker-php-ext-install \
+  # see https://www.drupal.org/project/drupal/issues/2718253
+  mkdir /usr/src/php/ext/uploadprogress; \
+  curl -fSL https://github.com/php/pecl-php-uploadprogress/archive/master.tar.gz | tar xvz -C /usr/src/php/ext/uploadprogress --strip 1; \
+  \
+  docker-php-ext-install -j "$(nproc)" \
     exif \
     gd \
     mbstring \
@@ -34,11 +53,25 @@ RUN apt update \
     pdo_mysql \
     uploadprogress \
     zip \
-  && { \
-    # Set the timezone.
-    echo "date.timezone = 'America/Los_Angeles'"; \
-  } >> /usr/local/etc/php/php.ini \
-  && { \
+  ; \
+  \
+  # Reset apt-mark's 'manual' list so that 'purge --auto-remove' will remove all
+  # build dependencies.
+  apt-mark auto '.*' > /dev/null; \
+  apt-mark manual $savedAptMark; \
+  ldd "$(php -r 'echo ini_get("extension_dir");')"/*.so \
+    | awk '/=>/ { print $3 }' \
+    | sort -u \
+    | xargs -r dpkg-query -S \
+    | cut -d: -f1 \
+    | sort -u \
+    | xargs -rt apt-mark manual; \
+  \
+  apt-get purge -y --auto-remove -o APT::AutoRemove::RecommendsImportant=false; \
+  rm -rf /var/lib/apt/lists/*
+
+RUN set -ex; \
+  { \
     # Set recommended PHP.ini settings.
     # See https://secure.php.net/manual/en/opcache.installation.php.
     echo 'opcache.memory_consumption = 128'; \
@@ -50,48 +83,48 @@ RUN apt update \
   } > /usr/local/etc/php/conf.d/opcache-recommended.ini
 
 # Install ImageMagick dependencies and ImageMagick.
-RUN apt update \
-  && apt install -y \
+RUN set -ex; \
+  \
+  apt-get update; \
+  apt-get install -y --no-install-recommends \
     libmagickwand-dev \
-    imagemagick
+    imagemagick \
+  ; \
+  rm -rf /var/lib/apt/lists/*
 
-# Install Drush dependencies and Drush.
-RUN apt update \
-  && apt install -y \
+# Install Drush dependencies and Drush Launcher.
+RUN set -ex; \
+  \
+  apt-get update; \
+  apt-get install -y --no-install-recommends \
     mysql-client \
     rsync \
-  && php -r "readfile('http://files.drush.org/drush.phar');" > drush \
-  && chmod +x drush \
-  && mv drush /usr/local/bin \
-  && drush -y init
-
-# Install Composer.
-RUN COMPOSER_SIGNATURE=$(curl https://composer.github.io/installer.sig) \
-  && curl -fSL "https://getcomposer.org/installer" -o composer-setup.php \
-  && echo "${COMPOSER_SIGNATURE} composer-setup.php" | sha384sum -c - \
-  && php composer-setup.php \
-  && rm composer-setup.php \
-  && mv composer.phar /usr/local/bin/composer
+  ; \
+  rm -rf /var/lib/apt/lists/*; \
+  \
+  curl -OL https://github.com/drush-ops/drush-launcher/releases/download/0.6.0/drush.phar; \
+  chmod +x drush.phar; \
+  mv drush.phar /usr/local/bin/drush;
 
 # Install sSMTP (Simple SMTP) and configure it to allow the 'From: address' to
 # be overridden. Also inform PHP where the sendmail program can be found.
-RUN apt update \
-  && apt install -y \
+RUN set -ex; \
+  \
+  apt-get update; \
+  apt-get install -y --no-install-recommends \
     ssmtp \
     mailutils \
-  && echo "FromLineOverride = YES" >> /etc/ssmtp/ssmtp.conf \
-  && echo "sendmail_path = \"/usr/sbin/sendmail -t -i\"" >> /usr/local/etc/php/php.ini
-
-# Copy scripts.
-COPY entrypoint.sh /
+  ; \
+  rm -rf /var/lib/apt/lists/*; \
+  \
+  echo "FromLineOverride = YES" >> /etc/ssmtp/ssmtp.conf; \
+  echo "sendmail_path = \"/usr/sbin/sendmail -t -i\"" >> /usr/local/etc/php/php.ini
 
 WORKDIR /var/www
 
 EXPOSE 443
 
-ENTRYPOINT ["/entrypoint.sh"]
-
 CMD ["apache2-foreground"]
 
 HEALTHCHECK --interval=5m --timeout=3s \
-  CMD curl -f $(hostname) || exit 1
+  CMD drush -r /var/www/html status bootstrap | grep -q Successful
