@@ -92,7 +92,7 @@ RUN set -ex; \
   ; \
   rm -rf /var/lib/apt/lists/*
 
-# Install Drush dependencies and Drush Launcher.
+# Install Drupal Console Launcher, Drush Launcher and dependencies.
 RUN set -ex; \
   \
   apt-get update; \
@@ -104,7 +104,11 @@ RUN set -ex; \
   \
   curl -OL https://github.com/drush-ops/drush-launcher/releases/download/0.6.0/drush.phar; \
   chmod +x drush.phar; \
-  mv drush.phar /usr/local/bin/drush;
+  mv drush.phar /usr/local/bin/drush; \
+  \
+  curl https://drupalconsole.com/installer -L -o drupal.phar; \
+  mv drupal.phar /usr/local/bin/drupal; \
+  chmod +x /usr/local/bin/drupal
 
 # Install sSMTP (Simple SMTP) and configure it to allow the 'From: address' to
 # be overridden. Also inform PHP where the sendmail program can be found.

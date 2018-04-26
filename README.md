@@ -6,6 +6,7 @@
 **Drupal is NOT included with this image! See [How to use this image](#how).**
 
 * Apache 2.4
+* Drupal Console Launcher
 * Drush Launcher
 * ImageMagick
 * PHP (latest 7.2 release)
