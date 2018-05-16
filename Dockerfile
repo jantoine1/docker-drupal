@@ -124,6 +124,14 @@ RUN set -ex; \
   echo "FromLineOverride = YES" >> /etc/ssmtp/ssmtp.conf; \
   echo "sendmail_path = \"/usr/sbin/sendmail -t -i\"" >> /usr/local/etc/php/php.ini
 
+# Copy the remote file server site include configuration file.
+COPY conf/apache2/conf-available/remote-file-server.conf /etc/apache2/conf-available/
+
+# Copy scripts.
+COPY entrypoint.sh /
+
+ENTRYPOINT ["/entrypoint.sh"]
+
 WORKDIR /var/www
 
 EXPOSE 443

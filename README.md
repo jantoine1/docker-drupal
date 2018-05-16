@@ -86,3 +86,9 @@ The example below would make the Drupal container accessible via the example.com
 ```bash
 -e VIRTUAL_HOST=example.com
 ```
+
+This image also provides a REMOTE_FILE_SERVER environment variable for defining a remote server to fetch files from if they're not found locally.
+
+```bash
+-e REMOTE_FILE_SERVER=example.net
+```
