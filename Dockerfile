@@ -97,7 +97,7 @@ RUN set -ex; \
   \
   apt-get update; \
   apt-get install -y --no-install-recommends \
-    mysql-client \
+    default-mysql-client \
     rsync \
   ; \
   rm -rf /var/lib/apt/lists/*; \
@@ -109,20 +109,6 @@ RUN set -ex; \
   curl https://drupalconsole.com/installer -L -o drupal.phar; \
   mv drupal.phar /usr/local/bin/drupal; \
   chmod +x /usr/local/bin/drupal
-
-# Install sSMTP (Simple SMTP) and configure it to allow the 'From: address' to
-# be overridden. Also inform PHP where the sendmail program can be found.
-RUN set -ex; \
-  \
-  apt-get update; \
-  apt-get install -y --no-install-recommends \
-    ssmtp \
-    mailutils \
-  ; \
-  rm -rf /var/lib/apt/lists/*; \
-  \
-  echo "FromLineOverride = YES" >> /etc/ssmtp/ssmtp.conf; \
-  echo "sendmail_path = \"/usr/sbin/sendmail -t -i\"" >> /usr/local/etc/php/php.ini
 
 # Copy the remote file server site include configuration file.
 COPY conf/apache2/conf-available/remote-file-server.conf /etc/apache2/conf-available/
