@@ -102,7 +102,7 @@ RUN set -ex; \
   ; \
   rm -rf /var/lib/apt/lists/*; \
   \
-  curl -OL https://github.com/drush-ops/drush-launcher/releases/download/0.6.0/drush.phar; \
+  curl -OL https://github.com/drush-ops/drush-launcher/releases/latest/download/drush.phar; \
   chmod +x drush.phar; \
   mv drush.phar /usr/local/bin/drush; \
   \
