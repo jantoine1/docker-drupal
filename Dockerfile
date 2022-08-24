@@ -1,7 +1,10 @@
-FROM php:7.0-apache
+FROM php:7.4-apache-bullseye
 
 # Enable the Cache Expiration, URL Rewriting and SSL Apache modules.
-RUN set -ex; \
+RUN set -eux; \
+  \
+  savedAptMark="$(apt-mark showmanual)"; \
+  \
   apt-get update; \
   apt-get install -y --no-install-recommends \
     ssl-cert \
@@ -20,34 +23,34 @@ RUN set -ex; \
       default-ssl \
     ; \
   fi; \
+  \
   rm -rf /var/lib/apt/lists/*
 
 # Install and configure PHP dependencies and extensions.
-RUN set -ex; \
-  # Save apt-mark's 'manual' list for purging build dependencies.
+RUN set -eux; \
+  \
   savedAptMark="$(apt-mark showmanual)"; \
   \
   # Install build dependencies.
   apt-get update; \
   apt-get install -y --no-install-recommends \
+    libfreetype6-dev \
     libjpeg-dev \
     libpng-dev \
     libpq-dev \
-#    zlib1g-dev \
+    libwebp-dev \
+    libzip-dev \
   ; \
   # Extract the PHP source and configure extensions.
-  docker-php-ext-configure gd --with-png-dir=/usr --with-jpeg-dir=/usr; \
-  # Include the PECL Upload Progress PHP extension source.
-  # see https://www.drupal.org/project/drupal/issues/2718253
-  mkdir /usr/src/php/ext/uploadprogress; \
-  curl -fSL https://github.com/php/pecl-php-uploadprogress/archive/master.tar.gz | tar xvz -C /usr/src/php/ext/uploadprogress --strip 1; \
+  docker-php-ext-configure gd \
+    --with-freetype \
+    --with-jpeg=/usr \
+    --with-webp \
+  ; \
   \
   docker-php-ext-install -j "$(nproc)" \
     gd \
-#    mbstring \
-#    mysqli \
     opcache \
-#    pdo \
     pdo_mysql \
     zip \
   ; \
@@ -67,7 +70,7 @@ RUN set -ex; \
   apt-get purge -y --auto-remove -o APT::AutoRemove::RecommendsImportant=false; \
   rm -rf /var/lib/apt/lists/*
 
-RUN set -ex; \
+RUN set -eux; \
   { \
   # Set recommended PHP.ini settings.
   # See https://secure.php.net/manual/en/opcache.installation.php.
@@ -80,7 +83,10 @@ RUN set -ex; \
   } > /usr/local/etc/php/conf.d/opcache-recommended.ini
 
 # Install ImageMagick dependencies and ImageMagick.
-RUN set -ex; \
+RUN set -eux; \
+  \
+  savedAptMark="$(apt-mark showmanual)"; \
+  \
   apt-get update; \
   apt-get install -y --no-install-recommends \
     libmagickwand-dev \
@@ -89,31 +95,21 @@ RUN set -ex; \
   rm -rf /var/lib/apt/lists/*
 
 # Install Drush dependencies and Drush.
-RUN set -ex; \
+RUN set -eux; \
+  \
+  savedAptMark="$(apt-mark showmanual)"; \
+  \
   apt-get update; \
   apt-get install -y --no-install-recommends \
-    mysql-client \
+    default-mysql-client \
     rsync \
   ; \
-  rm -rf /var/lib/apt/lists/*; \
   \
-  php -r "readfile('https://github.com/drush-ops/drush/releases/download/8.1.16/drush.phar');" > /usr/local/bin/drush; \
-  chmod +x /usr/local/bin/drush; \
-  drush -y init
-
-# Install sSMTP (Simple SMTP) and configure it to allow the 'From: address' to
-# be overridden. Also inform PHP where the sendmail program can be found.
-RUN set -ex; \
-  \
-  apt-get update; \
-  apt-get install -y --no-install-recommends \
-    ssmtp \
-    mailutils \
-  ; \
-  rm -rf /var/lib/apt/lists/*; \
-  \
-  echo "FromLineOverride = YES" >> /etc/ssmtp/ssmtp.conf; \
-  echo "sendmail_path = \"/usr/sbin/sendmail -t -i\"" >> /usr/local/etc/php/php.ini
+  curl -OL https://github.com/drush-ops/drush/releases/download/8.4.11/drush.phar; \
+  chmod +x drush.phar; \
+  mv drush.phar /usr/local/bin/drush; \
+  drush -y init; \
+  rm -rf /var/lib/apt/lists/*
 
 # Copy the remote file server site include configuration file.
 COPY conf/apache2/conf-available/remote-file-server.conf /etc/apache2/conf-available/
