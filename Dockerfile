@@ -1,12 +1,10 @@
-FROM php:7.4-apache-bullseye
+FROM php:8.0-apache-bullseye
 
 # Enable the Cache Expiration, URL Rewriting and SSL Apache modules.
 RUN set -eux; \
   \
-  savedAptMark="$(apt-mark showmanual)"; \
-  \
-  apt-get update; \
-  apt-get install -y --no-install-recommends \
+  apt update; \
+  apt install -y --no-install-recommends \
     ssl-cert \
   ; \
   \
@@ -32,8 +30,8 @@ RUN set -eux; \
   savedAptMark="$(apt-mark showmanual)"; \
   \
   # Install build dependencies.
-  apt-get update; \
-  apt-get install -y --no-install-recommends \
+  apt update; \
+  apt install -y --no-install-recommends \
     libfreetype6-dev \
     libjpeg-dev \
     libpng-dev \
@@ -67,7 +65,7 @@ RUN set -eux; \
     | sort -u \
     | xargs -rt apt-mark manual; \
   \
-  apt-get purge -y --auto-remove -o APT::AutoRemove::RecommendsImportant=false; \
+  apt purge -y --auto-remove -o APT::AutoRemove::RecommendsImportant=false; \
   rm -rf /var/lib/apt/lists/*
 
 RUN set -eux; \
@@ -85,10 +83,8 @@ RUN set -eux; \
 # Install ImageMagick dependencies and ImageMagick.
 RUN set -eux; \
   \
-  savedAptMark="$(apt-mark showmanual)"; \
-  \
-  apt-get update; \
-  apt-get install -y --no-install-recommends \
+  apt update; \
+  apt install -y --no-install-recommends \
     libmagickwand-dev \
     imagemagick \
   ; \
@@ -97,10 +93,8 @@ RUN set -eux; \
 # Install Drush dependencies and Drush.
 RUN set -eux; \
   \
-  savedAptMark="$(apt-mark showmanual)"; \
-  \
-  apt-get update; \
-  apt-get install -y --no-install-recommends \
+  apt update; \
+  apt install -y --no-install-recommends \
     default-mysql-client \
     rsync \
   ; \
